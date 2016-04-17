@@ -1,0 +1,25 @@
+{
+  "siteName": "Concurrency",
+  "port": 3000,
+  "hostname": "127.0.0.1",
+  "debug": true,
+  "logPath": "/home/camilo/Documents/Development/logs/",
+  "logLevel": "debug",
+  "secret": "16OaqmeFThFsflhIRu5irmUN38Yrhq9tRk4uzirqeeiH55xVu8",
+  "nosql": {
+    "dist": {
+      "adapter": "redis",
+      "host": "127.0.0.1",
+      "port": 6379
+    },
+    "debug": {
+      "adapter": "redis",
+      "host": "127.0.0.1",
+      "port": 6379
+    }
+  },
+  "web": {
+    "webservices": {
+    }
+  }
+}

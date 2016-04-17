@@ -1,0 +1,109 @@
+#!/usr/bin/env node
+//
+// run Server
+//
+// 2016, Camilo Quimbayo
+
+(function(){
+    "use strict";
+
+    var fs = require("fs"),
+        path = require("path"),
+        ld = require("lodash"),
+        argv = require("yargs").usage("Usage: $0 -c <configfile>")
+            .option("c", {
+                demand: false,
+                alias: "config",
+                describe: "Configuration file (default: ./config.json)"
+            }).argv,
+        utils = require("../modules/utils"),
+        app = require("../app"),
+
+        logger = utils.logger,
+        defaults = utils.defaults,
+        createApp= app.create;
+
+    // First get config files, then launch app
+    function run() {
+        var config = getConfig(argv.c);
+        if(argv.d){
+            ld.extend(config, {debug: true});
+        }
+        launch(config);
+    }
+
+    // Gets the configuration vars for this server from config files
+    function getConfig(filename) {
+        var i,
+            files,
+            raw,
+            parsed,
+            config = {};
+
+        if (filename) {
+            files = [filename];
+        } else {
+            files = [
+                path.resolve(__dirname, "../config.json")
+            ];
+        }
+        // This is all sync
+        for (i = 0; i < files.length; i++) {
+            if (fs.existsSync(files[i])) {
+                raw = fs.readFileSync(files[i]);
+                try {
+                    parsed = JSON.parse(raw);
+                    ld.extend(config, parsed);
+                } catch (err) {
+                    console.error(err);
+                    process.exit(1);
+                }
+            }
+        }
+
+        if(!raw) {
+            console.log("Server need config file.");
+            process.exit(1);
+        }
+
+        return config;
+    }
+
+    // Launch Server
+    function launch(configFile){
+        var config,
+            log;
+
+        // Extend default config from config file
+        config = ld.clone(configFile);
+        config = ld.defaults(config, defaults);
+
+        // Envioroment
+        process.env.NODE_ENV = config.debug ? "development" : "production";
+        config.env = config.debug ? "debug" : "dist";
+
+        // Init logger
+        log = logger.initLogger(config);
+
+        createApp(config).then(function(server) {
+            server.run().then(function(res){
+                log.info(res);
+            }).catch(function(err){
+                log.error(err);
+                console.error(err);
+                process.exit(1);
+            });
+            return server;
+        }).catch(function(err){
+            log.error(err);
+            console.error(err);
+            process.exit(1);
+        });
+
+
+    }
+
+    // Init!!
+    run();
+
+})();
